@@ -93,7 +93,7 @@ namespace buff_scraper
                     {
 
                         ColorWrite(" Invalid prices.\n", ConsoleColor.Red);
-                        await browser.CloseAsync();
+                        await browser.CloseAsync();// a
                     }
                 }
             }
