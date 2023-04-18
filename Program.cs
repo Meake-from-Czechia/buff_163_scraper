@@ -37,57 +37,66 @@ namespace buff_scraper
         {
             string name;
             double[] price = new double[2];
-            var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+            using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+            { Headless = true }))
             {
-                Headless = true
-            });
-            var page = await browser.NewPageAsync();
-            page.DefaultTimeout = 30000;
-            await Console.Out.WriteAsync(".");
-            try
-            {
-                await page.GoToAsync(activeLink);
-                await Console.Out.WriteAsync(".");
-                await page.WaitForNetworkIdleAsync();
-                //await Task.Delay(5000);
-            }
-            catch (Exception ex)
-            {
-                ColorWrite(ex.Message + '\n', ConsoleColor.Red);
-                await browser.CloseAsync();
-            }
-            try
-            {
-                const string lowestPriceEval = @"Array.from(document.querySelectorAll('.f_Strong')).map(price => price.textContent);";
-                const string nameEval = @"Array.from(document.querySelectorAll('.detail-cont h1')).map(name => name.textContent);";
-                string[] lowestPrices = await page.EvaluateExpressionAsync<string[]>(lowestPriceEval);
-                if (lowestPrices.Length == 0)
+                using (var page = await browser.NewPageAsync())
                 {
-                    price[0] = 0;
-                    price[1] = 0;
-                }
-                else
-                {
-                    price[0] = CleanUpPrice(lowestPrices[1]);
-                    price[1] = CleanUpPrice(lowestPrices[2]);
-                }
-                name = (await page.EvaluateExpressionAsync<string[]>(nameEval))[0];
-                await Console.Out.WriteAsync(". ");
-                if (price[0] / price[1] < 0.95)
-                {
-                    ColorWrite("\n[======= Item found =======]\n", ConsoleColor.Green);
-                    ColorWrite($"Name: {name}\n", ConsoleColor.Yellow);
-                    Console.WriteLine($"Quotient: {price[0] / price[1]}");
-                    Console.WriteLine($"Link: {activeLink}");
-                }
-            }
-            catch
-            {
+                    await page.SetRequestInterceptionAsync(true);
+                    page.Request += (sender, e) =>
+                    {
+                        if (e.Request.ResourceType == ResourceType.Image || e.Request.ResourceType == ResourceType.StyleSheet)
+                            e.Request.AbortAsync();
+                        else
+                            e.Request.ContinueAsync();
+                    };
+                    page.DefaultTimeout = 30000;
+                    await Console.Out.WriteAsync(".");
+                    try
+                    {
+                        await page.GoToAsync(activeLink);
+                        await Console.Out.WriteAsync(".");
+                        await page.WaitForNetworkIdleAsync();
+                        //await Task.Delay(5000);
+                    }
+                    catch (Exception ex)
+                    {
+                        ColorWrite(ex.Message + '\n', ConsoleColor.Red);
+                        await browser.CloseAsync();
+                    }
+                    try
+                    {
+                        const string lowestPriceEval = @"Array.from(document.querySelectorAll('.f_Strong')).map(price => price.textContent);";
+                        const string nameEval = @"Array.from(document.querySelectorAll('.detail-cont h1')).map(name => name.textContent);";
+                        string[] lowestPrices = await page.EvaluateExpressionAsync<string[]>(lowestPriceEval);
+                        if (lowestPrices.Length == 0)
+                        {
+                            price[0] = 0;
+                            price[1] = 0;
+                        }
+                        else
+                        {
+                            price[0] = CleanUpPrice(lowestPrices[1]);
+                            price[1] = CleanUpPrice(lowestPrices[2]);
+                        }
+                        name = (await page.EvaluateExpressionAsync<string[]>(nameEval))[0];
+                        await Console.Out.WriteAsync(". ");
+                        if (price[0] / price[1] < 0.95)
+                        {
+                            ColorWrite("\n[======= Item found =======]\n", ConsoleColor.Green);
+                            ColorWrite($"Name: {name}\n", ConsoleColor.Yellow);
+                            Console.WriteLine($"Quotient: {price[0] / price[1]}");
+                            Console.WriteLine($"Link: {activeLink}");
+                        }
+                    }
+                    catch
+                    {
 
-                ColorWrite(" Invalid prices.\n", ConsoleColor.Red);
-                await browser.CloseAsync();
+                        ColorWrite(" Invalid prices.\n", ConsoleColor.Red);
+                        await browser.CloseAsync();
+                    }
+                }
             }
-            await browser.CloseAsync();
         }
         public static double CleanUpPrice(string price)
         {
