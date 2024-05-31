@@ -51,13 +51,12 @@ namespace buff_scraper
                             e.Request.ContinueAsync();
                     };
                     page.DefaultTimeout = 30000;
-                    await Console.Out.WriteAsync(".");
+                    await Console.Out.WriteAsync(",");
                     try
                     {
                         await page.GoToAsync(activeLink);
                         await Console.Out.WriteAsync(".");
                         await page.WaitForNetworkIdleAsync();
-                        //await Task.Delay(5000);
                     }
                     catch (Exception ex)
                     {
@@ -81,7 +80,7 @@ namespace buff_scraper
                         }
                         name = (await page.EvaluateExpressionAsync<string[]>(nameEval))[0];
                         await Console.Out.WriteAsync(". ");
-                        if (price[0] / price[1] < 0.95)
+                        if (price[0] / price[1] < 0.97)
                         {
                             ColorWrite("\n[======= Item found =======]\n", ConsoleColor.Green);
                             ColorWrite($"Name: {name}\n", ConsoleColor.Yellow);
@@ -93,7 +92,7 @@ namespace buff_scraper
                     {
 
                         ColorWrite(" Invalid prices.\n", ConsoleColor.Red);
-                        await browser.CloseAsync();// a
+                        await browser.CloseAsync();
                     }
                 }
             }
