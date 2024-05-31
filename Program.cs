@@ -36,6 +36,8 @@ namespace buff_scraper
         public static async Task GetSteamPrices(string activeLink)
         {
             string name;
+            Lmao xd = new Lmao();
+            xd.Name = activeLink;
             double[] price = new double[2];
             using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             { Headless = true }))
@@ -43,6 +45,7 @@ namespace buff_scraper
                 using (var page = await browser.NewPageAsync())
                 {
                     await page.SetRequestInterceptionAsync(true);
+                    await Console.Out.WriteLineAsync();
                     page.Request += (sender, e) =>
                     {
                         if (e.Request.ResourceType == ResourceType.Image || e.Request.ResourceType == ResourceType.StyleSheet)
@@ -54,7 +57,7 @@ namespace buff_scraper
                     await Console.Out.WriteAsync(",");
                     try
                     {
-                        await page.GoToAsync(activeLink);
+                        await page.GoToAsync(xd.Name);
                         await Console.Out.WriteAsync(".");
                         await page.WaitForNetworkIdleAsync();
                     }
@@ -115,5 +118,10 @@ namespace buff_scraper
             Console.Write(msg);
             Console.ResetColor();
         }
+    }
+    public class Lmao
+    {
+        public Lmao() { }
+        public string Name { get; set; }
     }
 }
